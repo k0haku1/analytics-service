@@ -31,11 +31,13 @@ func NewConsumer(brokers []string, groupID string, topics []string, service *ser
 }
 func (c *Consumer) Start(ctx context.Context) {
 	go func() {
-		if err := c.consumerGroup.Consume(ctx, c.topics, c); err != nil {
-			log.Printf("Error from consumer: %v", err)
-		}
-		if ctx.Err() != nil {
-			return
+		for {
+			if err := c.consumerGroup.Consume(ctx, c.topics, c); err != nil {
+				log.Printf("Error from consumer: %v", err)
+			}
+			if ctx.Err() != nil {
+				return
+			}
 		}
 	}()
 }
@@ -43,7 +45,8 @@ func (c *Consumer) Setup(_ sarama.ConsumerGroupSession) error   { return nil }
 func (c *Consumer) Cleanup(_ sarama.ConsumerGroupSession) error { return nil }
 func (c *Consumer) ConsumeClaim(sess sarama.ConsumerGroupSession, claim sarama.ConsumerGroupClaim) error {
 	for msg := range claim.Messages() {
-		c.service.GetTopics(msg.Key, msg.Value)
+
+		c.service.GetTopics(sess.Context(), msg.Key, msg.Value)
 		sess.MarkMessage(msg, "")
 	}
 	return nil
