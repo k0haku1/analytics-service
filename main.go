@@ -3,7 +3,9 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/k0haku1/analytics-service/internal/database"
+	"github.com/gofiber/fiber/v2"
+	"github.com/k0haku1/analytics-service/database"
+	"github.com/k0haku1/analytics-service/internal/handlers"
 	"github.com/k0haku1/analytics-service/internal/kafka"
 	"github.com/k0haku1/analytics-service/internal/repository"
 	"github.com/k0haku1/analytics-service/internal/service"
@@ -26,6 +28,10 @@ func main() {
 
 	repo := repository.NewClickHouseRepository(conn)
 	service := service.NewAnalyticsService(repo)
+	handler := handlers.NewOrderHandler(service)
+
+	app := fiber.New()
+	app.Get("/get-popular", handler.GetPopularProduct)
 
 	brokers := []string{"localhost:9092"}
 	groupID := "analytics_group"
@@ -47,6 +53,12 @@ func main() {
 		cancel()
 	}()
 
+	go func() {
+		if err := app.Listen(":8082"); err != nil {
+			log.Fatal(err)
+		}
+	}()
+
 	consumer.Start(ctx)
 
 	<-ctx.Done()
@@ -55,4 +67,5 @@ func main() {
 	if err := conn.Close(); err != nil {
 		log.Println("Error closing ClickHouse connection:", err)
 	}
+
 }

@@ -43,10 +43,10 @@ func (c *Consumer) Start(ctx context.Context) {
 }
 func (c *Consumer) Setup(_ sarama.ConsumerGroupSession) error   { return nil }
 func (c *Consumer) Cleanup(_ sarama.ConsumerGroupSession) error { return nil }
+
 func (c *Consumer) ConsumeClaim(sess sarama.ConsumerGroupSession, claim sarama.ConsumerGroupClaim) error {
 	for msg := range claim.Messages() {
-
-		c.service.GetTopics(sess.Context(), msg.Key, msg.Value)
+		c.service.InsertOrders(sess.Context(), msg.Key, msg.Value)
 		sess.MarkMessage(msg, "")
 	}
 	return nil
