@@ -13,5 +13,13 @@ services:
     volumes:
       - clickhouse-data:/var/lib/clickhouse
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+  redis:
+    image: redis:latest
+    container_name: redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
 volumes:
   clickhouse-data:
+  redis-data:

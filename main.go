@@ -9,6 +9,7 @@ import (
 	"github.com/k0haku1/analytics-service/internal/kafka"
 	"github.com/k0haku1/analytics-service/internal/repository"
 	"github.com/k0haku1/analytics-service/internal/service"
+	"github.com/k0haku1/analytics-service/redis"
 	"log"
 	"os"
 	"os/signal"
@@ -20,6 +21,8 @@ func main() {
 		fmt.Println("ClickHouse connection error:", err)
 	}
 
+	redis := redis.NewRedisClient()
+
 	defer func() {
 		if err := conn.Close(); err != nil {
 			fmt.Println("ClickHouse connection close error:", err)
@@ -27,7 +30,7 @@ func main() {
 	}()
 
 	repo := repository.NewClickHouseRepository(conn)
-	service := service.NewAnalyticsService(repo)
+	service := service.NewAnalyticsService(repo, redis)
 	handler := handlers.NewOrderHandler(service)
 
 	app := fiber.New()
